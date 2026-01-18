@@ -4,12 +4,13 @@ server:
 stats-server:
   url: http://localhost:9090
   app: ${STATS_SERVER_APP:ewm-main-service}
+
 spring:
   application:
-    name: stat-server
+    name: ewm-service
 
   datasource:
-    url: jdbc:h2:mem:stat-db
+    url: jdbc:h2:mem:ewm-db
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -25,3 +26,10 @@ spring:
   sql:
     init:
       mode: embedded
+logging:
+  level:
+    org:
+      hibernate:
+        orm:
+          jdbc:
+            bind: trace
