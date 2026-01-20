@@ -132,6 +132,7 @@ public class CompilationsServiceImpl implements CompilationsService {
                                         EventMapper.mapToShortDto(
                                                 event,
                                                 confirmedRequests.getOrDefault(event.getId(), 0L),
+                                                null,
                                                 null))
                         .toList();
 

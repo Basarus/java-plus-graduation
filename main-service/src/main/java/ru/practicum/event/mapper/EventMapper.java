@@ -35,7 +35,8 @@ public class EventMapper {
                 newEventDto.title());
     }
 
-    public EventFullDto mapToFullDto(Event event, long confirmedRequests, Long views) {
+    public EventFullDto mapToFullDto(
+            Event event, long confirmedRequests, Long views, Long commentaries) {
         return new EventFullDto(
                 event.getAnnotation(),
                 CategoryMapper.mapToDto(event.getCategory()),
@@ -52,10 +53,12 @@ public class EventMapper {
                 event.getRequestModeration(),
                 event.getState(),
                 event.getTitle(),
-                views);
+                views,
+                commentaries);
     }
 
-    public EventShortDto mapToShortDto(Event event, long confirmedRequests, Long views) {
+    public EventShortDto mapToShortDto(
+            Event event, long confirmedRequests, Long views, Long commentaries) {
         return new EventShortDto(
                 event.getAnnotation(),
                 CategoryMapper.mapToDto(event.getCategory()),
@@ -65,7 +68,8 @@ public class EventMapper {
                 UserMapper.mapToUserShortDto(event.getInitiator()),
                 event.getPaid(),
                 event.getTitle(),
-                views);
+                views,
+                commentaries);
     }
 
     public void updateEventFromDto(

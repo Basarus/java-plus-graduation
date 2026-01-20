@@ -90,4 +90,6 @@ public interface EventRepository
     Page<Event> findByInitiator_Id(Long initiatorId, Pageable pageable);
 
     Set<Event> findAllByIdIn(Collection<Long> ids);
+
+    boolean existsById(Long eventId);
 }

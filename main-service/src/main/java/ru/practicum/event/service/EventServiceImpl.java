@@ -10,6 +10,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.repository.CategoryRepository;
 import ru.practicum.client.StatsClient;
+import ru.practicum.comment.repository.CommentRepository;
+import ru.practicum.comment.repository.EventCommentCount;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.event.controller.EventSortBy;
 import ru.practicum.event.dto.*;
@@ -47,6 +49,7 @@ public class EventServiceImpl implements EventService {
     private final CategoryRepository categoryRepository;
     private final StatsClient statsClient;
     private final ParticipationRequestRepository requestRepository;
+    private final CommentRepository commentRepository;
 
     @Override
     public EventFullDto getById(Long eventId, HttpServletRequest request) {
@@ -63,8 +66,13 @@ public class EventServiceImpl implements EventService {
 
         Map<Long, Long> confirmedRequests = getConfirmedRequests(Set.of(event));
 
+        Map<Long, Long> commentariesCount = getCommentariesCount(Set.of(event));
+
         return EventMapper.mapToFullDto(
-                event, confirmedRequests.getOrDefault(event.getId(), 0L), statsDto.hits());
+                event,
+                confirmedRequests.getOrDefault(event.getId(), 0L),
+                statsDto.hits(),
+                commentariesCount.getOrDefault(event.getId(), 0L));
     }
 
     @Override
@@ -75,10 +83,13 @@ public class EventServiceImpl implements EventService {
 
         statsClient.hit(getRequest.httpRequest());
 
+        Set<Event> eventsSet = events.stream().collect(Collectors.toSet());
+
         Map<Long, Long> statsForEvents = getStatsMapForEvents(events);
 
-        Map<Long, Long> confirmedRequests =
-                getConfirmedRequests(events.stream().collect(Collectors.toSet()));
+        Map<Long, Long> confirmedRequests = getConfirmedRequests(eventsSet);
+
+        Map<Long, Long> commentariesCount = getCommentariesCount(eventsSet);
 
         List<EventShortDto> eventsList =
                 events.stream()
@@ -87,7 +98,8 @@ public class EventServiceImpl implements EventService {
                                         EventMapper.mapToShortDto(
                                                 event,
                                                 confirmedRequests.getOrDefault(event.getId(), 0L),
-                                                statsForEvents.get(event.getId())))
+                                                statsForEvents.get(event.getId()),
+                                                commentariesCount.getOrDefault(event.getId(), 0L)))
                         .toList();
 
         if (EventSortBy.VIEWS.equals(getRequest.sort())) {
@@ -114,7 +126,8 @@ public class EventServiceImpl implements EventService {
                                 EventMapper.mapToFullDto(
                                         event,
                                         confirmedRequests.getOrDefault(event.getId(), 0L),
-                                        statsForEvents.get(event.getId())))
+                                        statsForEvents.get(event.getId()),
+                                        null))
                 .toList();
     }
 
@@ -135,7 +148,8 @@ public class EventServiceImpl implements EventService {
                                 EventMapper.mapToShortDto(
                                         event,
                                         confirmedRequests.getOrDefault(event.getId(), 0L),
-                                        statsForEvents.get(event.getId())))
+                                        statsForEvents.get(event.getId()),
+                                        null))
                 .toList();
     }
 
@@ -155,7 +169,7 @@ public class EventServiceImpl implements EventService {
         }
         Event saved = eventRepository.save(event);
 
-        return EventMapper.mapToFullDto(saved, 0, 0L);
+        return EventMapper.mapToFullDto(saved, 0, 0L, 0L);
     }
 
     @Override
@@ -173,7 +187,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> confirmedRequests = getConfirmedRequests(Set.of(event));
 
         return EventMapper.mapToFullDto(
-                event, confirmedRequests.getOrDefault(event.getId(), 0L), statsDto.hits());
+                event, confirmedRequests.getOrDefault(event.getId(), 0L), statsDto.hits(), null);
     }
 
     @Override
@@ -200,7 +214,7 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> confirmedRequests = getConfirmedRequests(Set.of(event));
 
         return EventMapper.mapToFullDto(
-                saved, confirmedRequests.getOrDefault(event.getId(), 0L), null);
+                saved, confirmedRequests.getOrDefault(event.getId(), 0L), null, null);
     }
 
     @Override
@@ -233,7 +247,18 @@ public class EventServiceImpl implements EventService {
         Map<Long, Long> confirmedRequests = getConfirmedRequests(Set.of(event));
 
         return EventMapper.mapToFullDto(
-                saved, confirmedRequests.getOrDefault(event.getId(), 0L), null);
+                saved, confirmedRequests.getOrDefault(event.getId(), 0L), null, null);
+    }
+
+    private Map<Long, Long> getCommentariesCount(Set<Event> events) {
+        if (events.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
+
+        return commentRepository.countCommentsByEventIds(eventIds).stream()
+                .collect(Collectors.toMap(EventCommentCount::eventId, EventCommentCount::count));
     }
 
     private Map<Long, Long> getStatsMapForEvents(Page<Event> events) {
