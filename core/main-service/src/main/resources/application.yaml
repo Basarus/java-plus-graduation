@@ -5,9 +5,7 @@ spring:
     import: "optional:configserver:"
   cloud:
     config:
-      discovery:
-        enabled: true
-        service-id: config-server
+      uri: http://localhost:8888
   jpa:
     open-in-view: false
 
