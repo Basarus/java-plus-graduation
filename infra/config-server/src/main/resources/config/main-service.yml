@@ -19,5 +19,5 @@ eureka:
     enabled: true
 
 stats-server:
-  service-id: stat-server
+  service-id: stats-server
   app: ewm-main-service

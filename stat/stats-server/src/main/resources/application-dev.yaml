@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: stat-server
+    name: stats-server
 
   datasource:
     url: jdbc:h2:mem:stat-db
