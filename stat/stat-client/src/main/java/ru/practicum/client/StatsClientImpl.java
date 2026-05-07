@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -18,18 +19,26 @@ public class StatsClientImpl implements StatsClient {
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final RestTemplate restTemplate;
-    private final String baseUrl;
+    private final Supplier<String> baseUrlSupplier;
     private final String app;
 
     public StatsClientImpl(RestTemplate restTemplate, String baseUrl, String app) {
         this.restTemplate = restTemplate;
-        this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        String url = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        this.baseUrlSupplier = () -> url;
+        this.app = app;
+    }
+
+    public StatsClientImpl(
+            RestTemplate restTemplate, Supplier<String> baseUrlSupplier, String app) {
+        this.restTemplate = restTemplate;
+        this.baseUrlSupplier = baseUrlSupplier;
         this.app = app;
     }
 
     @Override
     public void hit(EndpointHitDto dto) {
-        String url = baseUrl + "/hit";
+        String url = baseUrlSupplier.get() + "/hit";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -54,7 +63,7 @@ public class StatsClientImpl implements StatsClient {
     public List<ViewStatsDto> getStats(
             LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
         UriComponentsBuilder b =
-                UriComponentsBuilder.fromHttpUrl(baseUrl + "/stats")
+                UriComponentsBuilder.fromHttpUrl(baseUrlSupplier.get() + "/stats")
                         .queryParam("start", start.format(FMT))
                         .queryParam("end", end.format(FMT))
                         .queryParam("unique", unique);

@@ -17,9 +17,17 @@ spring:
       hibernate:
         format_sql: true
 
+  cloud:
+    config:
+      enabled: false
+
 logging:
   level:
     org.hibernate.SQL: debug
+
+eureka:
+  client:
+    enabled: false
 
 stats-server:
   url: http://localhost:9090
