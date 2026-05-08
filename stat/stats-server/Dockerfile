@@ -2,24 +2,33 @@ FROM maven:3.9.11-amazoncorretto-21 AS builder
 WORKDIR /application
 
 COPY pom.xml ./
+COPY core/pom.xml core/pom.xml
+COPY core/main-service/pom.xml core/main-service/pom.xml
+COPY core/user-service/pom.xml core/user-service/pom.xml
+COPY core/event-service/pom.xml core/event-service/pom.xml
+COPY core/request-service/pom.xml core/request-service/pom.xml
+COPY core/extra-service/pom.xml core/extra-service/pom.xml
 COPY stat/pom.xml stat/pom.xml
 COPY stat/stat-dto/pom.xml stat/stat-dto/pom.xml
 COPY stat/stat-client/pom.xml stat/stat-client/pom.xml
-COPY stat/stat-server/pom.xml stat/stat-server/pom.xml
-COPY main-service/pom.xml main-service/pom.xml
+COPY stat/stats-server/pom.xml stat/stats-server/pom.xml
+COPY infra/pom.xml infra/pom.xml
+COPY infra/discovery-server/pom.xml infra/discovery-server/pom.xml
+COPY infra/config-server/pom.xml infra/config-server/pom.xml
+COPY infra/gateway-server/pom.xml infra/gateway-server/pom.xml
 
 ENV MAVEN_OPTS="-Dmaven.repo.local=/app/.m2/repository"
-RUN mvn dependency:go-offline -pl stat/stat-server -am -B
+RUN mvn dependency:go-offline -pl stat/stats-server -am -B
 
 COPY stat stat
 
-RUN mvn clean package -pl stat/stat-server -am -DskipTests
+RUN mvn clean package -pl stat/stats-server -am -DskipTests
 
 
 FROM amazoncorretto:21.0.8-alpine AS layers
 WORKDIR /application
 
-COPY --from=builder /application/stat/stat-server/target/*.jar app.jar
+COPY --from=builder /application/stat/stats-server/target/*.jar app.jar
 RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
 
