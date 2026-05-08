@@ -6,9 +6,6 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
-  jpa:
-    open-in-view: false
-
 eureka:
   client:
     service-url:
