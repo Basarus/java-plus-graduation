@@ -1,32 +1,40 @@
 services:
-  stats-server:
+  discovery-server:
     build:
       context: .
-      dockerfile: stat/stat-server/Dockerfile
-    container_name: stats-server
-    restart: unless-stopped
+      dockerfile: infra/discovery-server/Dockerfile
+    container_name: discovery-server
     ports:
-      - "9090:9090"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats
-      SPRING_DATASOURCE_USERNAME: stats_user
-      SPRING_DATASOURCE_PASSWORD: secret
+      - "8761:8761"
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:9090/actuator/health || exit 1
-      interval: 30s
+      test: wget --no-verbose --tries=1 --spider http://localhost:8761/actuator/health || exit 1
+      interval: 10s
       timeout: 5s
-      start_period: 30s
-      retries: 5
+      start_period: 60s
+      retries: 10
+
+  config-server:
+    build:
+      context: .
+      dockerfile: infra/config-server/Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
     depends_on:
-      stats-db:
+      discovery-server:
         condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8888/actuator/health || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
 
   stats-db:
     image: postgres:17.7-alpine3.23
     container_name: stats-db
-    restart: unless-stopped
-    ports:
-      - "13000:5432"
     environment:
       - POSTGRES_DB=stats
       - POSTGRES_USER=stats_user
@@ -39,48 +47,219 @@ services:
       interval: 5s
       retries: 10
 
-  ewm-service:
-    build:
-      context: .
-      dockerfile: main-service/Dockerfile
-    container_name: ewm-service
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://ewm-db:5432/ewm
-      SPRING_DATASOURCE_USERNAME: ewm_user
-      SPRING_DATASOURCE_PASSWORD: secret
-      STATS_SERVER_URL: http://stats-server:9090
-      STATS_SERVER_APP: ewm-main-service
-    healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
-      interval: 30s
-      timeout: 5s
-      start_period: 30s
-      retries: 5
-    depends_on:
-      ewm-db:
-        condition: service_healthy
-
-  ewm-db:
+  user-db:
     image: postgres:17.7-alpine3.23
-    container_name: ewm-db
-    restart: unless-stopped
-    ports:
-      - "13001:5432"
+    container_name: user-db
     environment:
-      - POSTGRES_DB=ewm
+      - POSTGRES_DB=ewm_user
       - POSTGRES_USER=ewm_user
       - POSTGRES_PASSWORD=secret
     volumes:
-      - ewm-db-data:/var/lib/postgresql/data/
+      - user-db-data:/var/lib/postgresql/data/
     healthcheck:
       test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
       timeout: 5s
       interval: 5s
       retries: 10
 
+  event-db:
+    image: postgres:17.7-alpine3.23
+    container_name: event-db
+    environment:
+      - POSTGRES_DB=ewm_event
+      - POSTGRES_USER=ewm_user
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - event-db-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  request-db:
+    image: postgres:17.7-alpine3.23
+    container_name: request-db
+    environment:
+      - POSTGRES_DB=ewm_request
+      - POSTGRES_USER=ewm_user
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - request-db-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  compilation-db:
+    image: postgres:17.7-alpine3.23
+    container_name: compilation-db
+    environment:
+      - POSTGRES_DB=ewm_compilation
+      - POSTGRES_USER=ewm_user
+      - POSTGRES_PASSWORD=secret
+    volumes:
+      - compilation-db-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  stats-server:
+    build:
+      context: .
+      dockerfile: stat/stats-server/Dockerfile
+    container_name: stats-server
+    ports:
+      - "9090:9090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats
+      - SPRING_DATASOURCE_USERNAME=stats_user
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=9090
+    depends_on:
+      stats-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:9090/actuator/health || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
+
+  user-service:
+    build:
+      context: .
+      dockerfile: core/user-service/Dockerfile
+    container_name: user-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/ewm_user
+      - SPRING_DATASOURCE_USERNAME=ewm_user
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8081
+    depends_on:
+      user-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8081/actuator/health || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
+
+  event-service:
+    build:
+      context: .
+      dockerfile: core/event-service/Dockerfile
+    container_name: event-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://event-db:5432/ewm_event
+      - SPRING_DATASOURCE_USERNAME=ewm_user
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8082
+    depends_on:
+      event-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8082/actuator/health || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
+
+  request-service:
+    build:
+      context: .
+      dockerfile: core/request-service/Dockerfile
+    container_name: request-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://request-db:5432/ewm_request
+      - SPRING_DATASOURCE_USERNAME=ewm_user
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8083
+    depends_on:
+      request-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8083/actuator/health || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
+
+  compilation-service:
+    build:
+      context: .
+      dockerfile: core/extra-service/Dockerfile
+    container_name: compilation-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://compilation-db:5432/ewm_compilation
+      - SPRING_DATASOURCE_USERNAME=ewm_user
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SERVER_PORT=8084
+    depends_on:
+      compilation-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 10
+
+  gateway-server:
+    build:
+      context: .
+      dockerfile: infra/gateway-server/Dockerfile
+    container_name: gateway-server
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - COMPILATION_SERVICE_URL=http://compilation-service:8084
+    depends_on:
+      user-service:
+        condition: service_healthy
+      event-service:
+        condition: service_healthy
+      request-service:
+        condition: service_healthy
+      compilation-service:
+        condition: service_healthy
+      stats-server:
+        condition: service_healthy
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health && wget --no-verbose --tries=1 --spider http://localhost:8080/compilations || exit 1
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 15
+
 volumes:
   stats-db-data:
-  ewm-db-data:
+  user-db-data:
+  event-db-data:
+  request-db-data:
+  compilation-db-data:
