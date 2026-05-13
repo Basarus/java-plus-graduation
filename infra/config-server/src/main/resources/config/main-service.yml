@@ -22,3 +22,12 @@ eureka:
 stats-server:
   service-id: stats-server
   app: ewm-main-service
+
+grpc:
+  client:
+    collector:
+      address: discovery://collector
+      negotiation-type: plaintext
+    analyzer:
+      address: discovery://analyzer
+      negotiation-type: plaintext

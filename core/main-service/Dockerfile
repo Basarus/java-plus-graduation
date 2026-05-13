@@ -2,25 +2,38 @@ FROM maven:3.9.11-amazoncorretto-21 AS builder
 WORKDIR /application
 
 COPY pom.xml ./
-COPY main-service/pom.xml main-service/pom.xml
+COPY core/pom.xml core/pom.xml
+COPY core/main-service/pom.xml core/main-service/pom.xml
 COPY stat/pom.xml stat/pom.xml
 COPY stat/stat-dto/pom.xml stat/stat-dto/pom.xml
 COPY stat/stat-client/pom.xml stat/stat-client/pom.xml
 COPY stat/stat-server/pom.xml stat/stat-server/pom.xml
+COPY recommendations/pom.xml recommendations/pom.xml
+COPY recommendations/stats-proto/pom.xml recommendations/stats-proto/pom.xml
+COPY recommendations/stats-avro/pom.xml recommendations/stats-avro/pom.xml
+COPY recommendations/collector/pom.xml recommendations/collector/pom.xml
+COPY recommendations/aggregator/pom.xml recommendations/aggregator/pom.xml
+COPY recommendations/analyzer/pom.xml recommendations/analyzer/pom.xml
+COPY infra/pom.xml infra/pom.xml
+COPY infra/config-server/pom.xml infra/config-server/pom.xml
+COPY infra/discovery-server/pom.xml infra/discovery-server/pom.xml
+COPY infra/gateway-server/pom.xml infra/gateway-server/pom.xml
 
 ENV MAVEN_OPTS="-Dmaven.repo.local=/app/.m2/repository"
-RUN mvn dependency:go-offline -pl main-service -am -B
+RUN mvn dependency:go-offline -pl core/main-service -am -B
 
-COPY main-service/src main-service/src
+COPY core/main-service/src core/main-service/src
 COPY stat stat
+COPY recommendations/stats-proto recommendations/stats-proto
+COPY recommendations/stats-avro recommendations/stats-avro
 
-RUN mvn clean package -pl main-service -am -DskipTests
+RUN mvn clean package -pl core/main-service -am -DskipTests
 
 
 FROM amazoncorretto:21.0.8-alpine AS layers
 WORKDIR /application
 
-COPY --from=builder /application/main-service/target/*.jar app.jar
+COPY --from=builder /application/core/main-service/target/*.jar app.jar
 RUN java -Djarmode=tools -jar app.jar extract --layers --destination extracted
 
 

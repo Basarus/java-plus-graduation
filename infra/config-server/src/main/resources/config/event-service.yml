@@ -1,0 +1,41 @@
+server:
+  port: 0
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ewm_event}
+    username: ${SPRING_DATASOURCE_USERNAME:ewm}
+    password: ${SPRING_DATASOURCE_PASSWORD:ewm}
+  sql:
+    init:
+      mode: always
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+eureka:
+  client:
+    enabled: true
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-server:8761/eureka/}
+
+feign:
+  circuitbreaker:
+    enabled: true
+
+stats-server:
+  service-id: stats-server
+  app: ewm-events-service
+
+grpc:
+  client:
+    collector:
+      address: discovery:///collector
+      negotiation-type: plaintext
+    analyzer:
+      address: discovery:///analyzer
+      negotiation-type: plaintext

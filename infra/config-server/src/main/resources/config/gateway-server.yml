@@ -2,34 +2,75 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: gateway-server
   cloud:
+    loadbalancer:
+      cache:
+        ttl: 5s
     gateway:
       discovery:
         locator:
           enabled: true
           lower-case-service-id: true
       routes:
-        - id: main-service-admin
-          uri: lb://main-service
+        - id: users-service-admin
+          uri: lb://user-service
           predicates:
-            - Path=/admin/**
-        - id: main-service-users
-          uri: lb://main-service
+            - Path=/admin/users/**
+        - id: events-service-admin-events
+          uri: lb://event-service
           predicates:
-            - Path=/users/**
-        - id: main-service-events
-          uri: lb://main-service
+            - Path=/admin/events/**
+        - id: events-service-admin-categories
+          uri: lb://event-service
+          predicates:
+            - Path=/admin/categories/**
+        - id: extra-service-admin-compilations
+          uri: ${COMPILATION_SERVICE_URL:lb://compilation-service}
+          predicates:
+            - Path=/admin/compilations,/admin/compilations/**
+        - id: extra-service-admin-comments
+          uri: ${COMPILATION_SERVICE_URL:lb://compilation-service}
+          predicates:
+            - Path=/admin/comments,/admin/comments/**
+        - id: requests-service-event-requests
+          uri: lb://request-service
+          predicates:
+            - Path=/users/*/events/*/requests,/users/*/events/*/requests/**
+        - id: events-service-users-like
+          uri: lb://event-service
+          predicates:
+            - Path=/users/*/events/*/like
+        - id: requests-service-user-requests
+          uri: lb://request-service
+          predicates:
+            - Path=/users/*/requests,/users/*/requests/**
+        - id: extra-service-user-comments
+          uri: ${COMPILATION_SERVICE_URL:lb://compilation-service}
+          predicates:
+            - Path=/users/*/comments,/users/*/comments/**
+        - id: events-service-users-events
+          uri: lb://event-service
+          predicates:
+            - Path=/users/*/events,/users/*/events/**
+        - id: events-service-recommendations
+          uri: lb://event-service
+          predicates:
+            - Path=/users/*/recommendations
+        - id: extra-service-event-comments
+          uri: ${COMPILATION_SERVICE_URL:lb://compilation-service}
+          predicates:
+            - Path=/events/*/comments,/events/*/comments/**
+        - id: events-service-events
+          uri: lb://event-service
           predicates:
             - Path=/events/**
-        - id: main-service-categories
-          uri: lb://main-service
+        - id: events-service-categories
+          uri: lb://event-service
           predicates:
             - Path=/categories/**
-        - id: main-service-compilations
-          uri: lb://main-service
+        - id: extra-service-compilations
+          uri: ${COMPILATION_SERVICE_URL:lb://compilation-service}
           predicates:
-            - Path=/compilations/**
-        - id: main-service-comments
-          uri: lb://main-service
-          predicates:
-            - Path=/comments/**
+            - Path=/compilations,/compilations/**

@@ -10,3 +10,12 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+grpc:
+  client:
+    collector:
+      address: static://${COLLECTOR_HOST:localhost}:${COLLECTOR_GRPC_PORT:9091}
+      negotiation-type: plaintext
+    analyzer:
+      address: static://${ANALYZER_HOST:localhost}:${ANALYZER_GRPC_PORT:9094}
+      negotiation-type: plaintext
