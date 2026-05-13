@@ -35,27 +35,18 @@ public class UserActionService {
 
         try {
             kafkaTemplate.send(userActionsTopic, avro.getUserId(), avro).get();
-
-            log.info(
-                    "Sent UserActionAvro to topic {}: userId={}, eventId={}, actionType={},"
-                            + " timestamp={}",
-                    userActionsTopic,
+            log.debug(
+                    "Sent UserAction to Kafka: userId={}, eventId={}, actionType={}",
                     avro.getUserId(),
                     avro.getEventId(),
-                    avro.getActionType(),
-                    avro.getTimestamp());
+                    avro.getActionType());
         } catch (Exception e) {
             log.error(
-                    "Failed to send UserActionAvro to Kafka. topic={}, bootstrapServers unknown,"
-                            + " userId={}, eventId={}, actionType={}, timestamp={}, error={}",
-                    userActionsTopic,
+                    "Failed to send UserAction to Kafka: userId={}, eventId={}, error={}",
                     avro.getUserId(),
                     avro.getEventId(),
-                    avro.getActionType(),
-                    avro.getTimestamp(),
                     e.getMessage(),
                     e);
-
             throw new RuntimeException("Failed to send user action to Kafka: " + e.getMessage(), e);
         }
     }

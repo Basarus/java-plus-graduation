@@ -51,7 +51,7 @@ public class RecommendationService {
                                                 weight,
                                                 timestamp)));
 
-        log.info(
+        log.debug(
                 "Saved UserAction: userId={}, eventId={}, weight={}",
                 action.getUserId(),
                 action.getEventId(),
@@ -75,50 +75,15 @@ public class RecommendationService {
 
     @Transactional(readOnly = true)
     public List<ScoredEvent> getInteractionsCount(List<Long> eventIds) {
-        Map<Long, Double> sums = Map.of();
-
-        for (int attempt = 0; attempt < 150; attempt++) {
-            List<UserAction> actions = userActionRepository.findAllByEventIdIn(eventIds);
-
-            log.info(
-                    "getInteractionsCount: eventIds={}, found {} actions",
-                    eventIds,
-                    actions.size());
-
-            Map<Long, Double> currentSums =
-                    actions.stream()
-                            .collect(
-                                    Collectors.groupingBy(
-                                            UserAction::getEventId,
-                                            Collectors.summingDouble(UserAction::getScore)));
-
-            sums = currentSums;
-
-            boolean allFound = true;
-
-            for (Long eventId : eventIds) {
-                if (!currentSums.containsKey(eventId)) {
-                    allFound = false;
-                    break;
-                }
-            }
-
-            if (allFound) {
-                break;
-            }
-
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        Map<Long, Double> resultSums = sums;
+        Map<Long, Double> sums =
+                userActionRepository.findAllByEventIdIn(eventIds).stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        UserAction::getEventId,
+                                        Collectors.summingDouble(UserAction::getScore)));
 
         return eventIds.stream()
-                .map(eventId -> new ScoredEvent(eventId, resultSums.getOrDefault(eventId, 0.0)))
+                .map(eventId -> new ScoredEvent(eventId, sums.getOrDefault(eventId, 0.0)))
                 .toList();
     }
 

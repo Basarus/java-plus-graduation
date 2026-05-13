@@ -80,26 +80,16 @@ public class RecommendationsGrpcController
     public void getInteractionsCount(
             InteractionsCountRequestProto request,
             StreamObserver<RecommendedEventProto> responseObserver) {
-        log.error(
-                "GET INTERACTIONS COUNT CONTROLLER CALLED: eventIds={}", request.getEventIdList());
-
         try {
             List<ScoredEvent> results =
                     recommendationService.getInteractionsCount(request.getEventIdList());
-
             for (ScoredEvent se : results) {
-                log.error(
-                        "SEND INTERACTIONS COUNT RESPONSE: eventId={}, score={}",
-                        se.eventId(),
-                        se.score());
-
                 responseObserver.onNext(
                         RecommendedEventProto.newBuilder()
                                 .setEventId(se.eventId())
                                 .setScore(se.score())
                                 .build());
             }
-
             responseObserver.onCompleted();
         } catch (Exception e) {
             log.error("Error in GetInteractionsCount", e);
