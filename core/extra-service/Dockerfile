@@ -7,6 +7,8 @@ COPY core/pom.xml core/pom.xml
 COPY core/event-service/pom.xml core/event-service/pom.xml
 COPY core/request-service/pom.xml core/request-service/pom.xml
 COPY core/extra-service/pom.xml core/extra-service/pom.xml
+COPY core/user-service/pom.xml core/user-service/pom.xml
+
 COPY stat/pom.xml stat/pom.xml
 COPY stat/stat-dto/pom.xml stat/stat-dto/pom.xml
 COPY stat/stat-client/pom.xml stat/stat-client/pom.xml
@@ -15,6 +17,12 @@ COPY infra/pom.xml infra/pom.xml
 COPY infra/discovery-server/pom.xml infra/discovery-server/pom.xml
 COPY infra/config-server/pom.xml infra/config-server/pom.xml
 COPY infra/gateway-server/pom.xml infra/gateway-server/pom.xml
+COPY recommendations/pom.xml recommendations/pom.xml
+COPY recommendations/stats-proto/pom.xml recommendations/stats-proto/pom.xml
+COPY recommendations/stats-avro/pom.xml recommendations/stats-avro/pom.xml
+COPY recommendations/collector/pom.xml recommendations/collector/pom.xml
+COPY recommendations/aggregator/pom.xml recommendations/aggregator/pom.xml
+COPY recommendations/analyzer/pom.xml recommendations/analyzer/pom.xml
 
 ENV MAVEN_OPTS="-Dmaven.repo.local=/app/.m2/repository"
 RUN mvn dependency:go-offline -pl core/extra-service -am -B

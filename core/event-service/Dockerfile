@@ -7,6 +7,7 @@ COPY core/pom.xml core/pom.xml
 COPY core/event-service/pom.xml core/event-service/pom.xml
 COPY core/request-service/pom.xml core/request-service/pom.xml
 COPY core/extra-service/pom.xml core/extra-service/pom.xml
+COPY core/user-service/pom.xml core/user-service/pom.xml
 COPY stat/pom.xml stat/pom.xml
 COPY stat/stat-dto/pom.xml stat/stat-dto/pom.xml
 COPY stat/stat-client/pom.xml stat/stat-client/pom.xml
