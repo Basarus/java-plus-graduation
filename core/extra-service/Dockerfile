@@ -3,8 +3,7 @@ WORKDIR /application
 
 COPY pom.xml ./
 COPY core/pom.xml core/pom.xml
-COPY core/main-service/pom.xml core/main-service/pom.xml
-COPY core/user-service/pom.xml core/user-service/pom.xml
+
 COPY core/event-service/pom.xml core/event-service/pom.xml
 COPY core/request-service/pom.xml core/request-service/pom.xml
 COPY core/extra-service/pom.xml core/extra-service/pom.xml

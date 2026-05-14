@@ -45,23 +45,16 @@ public class RecommendationService {
         List<Long> initiatorIds = events.stream().map(Event::getInitiatorId).distinct().toList();
         Map<Long, UserShortDto> initiators;
         try {
-            initiators =
-                    usersClient.getUsersByIds(initiatorIds).stream()
-                            .collect(Collectors.toMap(UserShortDto::id, u -> u));
+            initiators = usersClient.getUsersByIds(initiatorIds).stream()
+                    .collect(Collectors.toMap(UserShortDto::id, u -> u));
         } catch (Exception e) {
             log.warn("Failed to fetch initiators: {}", e.getMessage());
             initiators = Map.of();
         }
         Map<Long, UserShortDto> finalInitiators = initiators;
         return events.stream()
-                .map(
-                        e ->
-                                EventMapper.mapToShortDto(
-                                        e,
-                                        0L,
-                                        null,
-                                        0L,
-                                        finalInitiators.getOrDefault(e.getInitiatorId(), null)))
+                .map(e -> EventMapper.mapToShortDto(
+                        e, 0L, null, 0L, finalInitiators.getOrDefault(e.getInitiatorId(), null)))
                 .toList();
     }
 }
