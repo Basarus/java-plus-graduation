@@ -13,6 +13,7 @@ import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.service.EventService;
 import ru.practicum.event.service.EventsPublicGetRequest;
 import ru.practicum.exception.ValidationException;
+import ru.practicum.recommendations.CollectorGrpcClient;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/events")
 public class EventPublicController {
     private final EventService eventService;
+    private final CollectorGrpcClient collectorGrpcClient;
 
     @GetMapping
     public Collection<EventShortDto> getEventsFiltered(
@@ -62,8 +64,15 @@ public class EventPublicController {
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto getEventById(@PathVariable Long eventId, HttpServletRequest request) {
+    public EventFullDto getEventById(
+            @PathVariable Long eventId,
+            @RequestParam(required = false) Long userId,
+            HttpServletRequest request) {
         log.info("Public get event with eventId={} requested", eventId);
-        return eventService.getById(eventId, request);
+        EventFullDto result = eventService.getById(eventId, request);
+        if (userId != null) {
+            collectorGrpcClient.sendView(userId, eventId);
+        }
+        return result;
     }
 }

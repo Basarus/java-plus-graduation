@@ -2,6 +2,7 @@ package ru.practicum.request.controller;
 
 import java.util.List;
 
+import ru.practicum.recommendations.CollectorGrpcClient;
 import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.request.service.ParticipationRequestService;
 
@@ -18,13 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 public class ParticipationRequestPrivateController {
 
     private final ParticipationRequestService requestService;
+    private final CollectorGrpcClient collectorGrpcClient;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ParticipationRequestDto createRequest(
             @PathVariable Long userId, @RequestParam Long eventId) {
         log.info("Create participation request userId={}, eventId={}", userId, eventId);
-        return requestService.createRequest(userId, eventId);
+        ParticipationRequestDto result = requestService.createRequest(userId, eventId);
+        collectorGrpcClient.sendRegister(userId, eventId);
+        return result;
     }
 
     @GetMapping

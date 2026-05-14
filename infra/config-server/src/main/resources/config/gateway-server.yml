@@ -2,6 +2,8 @@ server:
   port: 8080
 
 spring:
+  application:
+    name: gateway-server
   cloud:
     loadbalancer:
       cache:
@@ -32,14 +34,14 @@ spring:
           uri: ${COMPILATION_SERVICE_URL:lb://compilation-service}
           predicates:
             - Path=/admin/comments,/admin/comments/**
-        - id: main-service-admin
-          uri: lb://main-service
-          predicates:
-            - Path=/admin/**
         - id: requests-service-event-requests
           uri: lb://request-service
           predicates:
             - Path=/users/*/events/*/requests,/users/*/events/*/requests/**
+        - id: events-service-users-like
+          uri: lb://event-service
+          predicates:
+            - Path=/users/*/events/*/like
         - id: requests-service-user-requests
           uri: lb://request-service
           predicates:
@@ -52,10 +54,10 @@ spring:
           uri: lb://event-service
           predicates:
             - Path=/users/*/events,/users/*/events/**
-        - id: main-service-users
-          uri: lb://main-service
+        - id: events-service-recommendations
+          uri: lb://event-service
           predicates:
-            - Path=/users/**
+            - Path=/users/*/recommendations
         - id: extra-service-event-comments
           uri: ${COMPILATION_SERVICE_URL:lb://compilation-service}
           predicates:

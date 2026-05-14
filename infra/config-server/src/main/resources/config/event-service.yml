@@ -18,6 +18,10 @@ spring:
 eureka:
   client:
     enabled: true
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://discovery-server:8761/eureka/}
 
 feign:
   circuitbreaker:
@@ -26,3 +30,12 @@ feign:
 stats-server:
   service-id: stats-server
   app: ewm-events-service
+
+grpc:
+  client:
+    collector:
+      address: discovery:///collector
+      negotiation-type: plaintext
+    analyzer:
+      address: discovery:///analyzer
+      negotiation-type: plaintext

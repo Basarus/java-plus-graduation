@@ -3,11 +3,11 @@ WORKDIR /application
 
 COPY pom.xml ./
 COPY core/pom.xml core/pom.xml
-COPY core/main-service/pom.xml core/main-service/pom.xml
-COPY core/user-service/pom.xml core/user-service/pom.xml
+
 COPY core/event-service/pom.xml core/event-service/pom.xml
 COPY core/request-service/pom.xml core/request-service/pom.xml
 COPY core/extra-service/pom.xml core/extra-service/pom.xml
+COPY core/user-service/pom.xml core/user-service/pom.xml
 COPY stat/pom.xml stat/pom.xml
 COPY stat/stat-dto/pom.xml stat/stat-dto/pom.xml
 COPY stat/stat-client/pom.xml stat/stat-client/pom.xml
@@ -16,12 +16,19 @@ COPY infra/pom.xml infra/pom.xml
 COPY infra/discovery-server/pom.xml infra/discovery-server/pom.xml
 COPY infra/config-server/pom.xml infra/config-server/pom.xml
 COPY infra/gateway-server/pom.xml infra/gateway-server/pom.xml
+COPY recommendations/pom.xml recommendations/pom.xml
+COPY recommendations/stats-proto/pom.xml recommendations/stats-proto/pom.xml
+COPY recommendations/stats-avro/pom.xml recommendations/stats-avro/pom.xml
+COPY recommendations/collector/pom.xml recommendations/collector/pom.xml
+COPY recommendations/aggregator/pom.xml recommendations/aggregator/pom.xml
+COPY recommendations/analyzer/pom.xml recommendations/analyzer/pom.xml
 
 ENV MAVEN_OPTS="-Dmaven.repo.local=/app/.m2/repository"
 RUN mvn dependency:go-offline -pl core/event-service -am -B
 
 COPY stat/stat-dto/src stat/stat-dto/src
 COPY stat/stat-client/src stat/stat-client/src
+COPY recommendations/stats-proto recommendations/stats-proto
 COPY core/event-service/src core/event-service/src
 
 RUN mvn clean package -pl core/event-service -am -DskipTests
